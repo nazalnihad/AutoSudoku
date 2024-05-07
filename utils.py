@@ -3,7 +3,7 @@ import numpy as np
 from tensorflow.keras.models import load_model
 
 def setModel():
-    model = load_model('resources/myModel.h5')
+    model = load_model('resources/digit-classifier.h5')
     return model
 
 def preProcess(img):
@@ -46,22 +46,22 @@ def splitImg(img):
             boxes.append(box)
     return boxes
 
-def getPredictions(boxes,model):
+def getPredictions(boxes, model):
     result = []
     for box in boxes:
         img = np.asarray(box)
-        img = img[4:img.shape[0]-4,4:img.shape[1]-4]
-        img = cv2.resize(img,(28,28))
-        img = img/255
-        img = img.reshape(1,28,28,1)
+        img = img[4:img.shape[0]-4, 4:img.shape[1]-4]
+        img = cv2.resize(img, (28, 28))
+        img = img / 255
+        img = img.reshape(1, 28, 28, 1)
         predictions = model.predict(img)
-        classIndex = model.predict_classes(img)
-        probabilityValue = np.amax(predictions)
-        if probabilityValue > 0.8:
-            result.append(classIndex[0])
+        class_index = np.argmax(predictions[0])
+        probability_value = np.amax(predictions)
+        if probability_value > 0.8:
+            result.append(class_index)
         else:
             result.append(0)
     return result
 
-a = setModel()
-a.describe()
+# a = setModel()
+# a.describe()
