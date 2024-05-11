@@ -62,6 +62,7 @@ def process_and_extract_board(image_data):
 
         # Flatten the board
         numb_board = np.reshape(numbers, (9, 9))
+        print(numb_board)
         return numb_board.tolist()  # Convert to a list for JSON serialization
     else:
         return None

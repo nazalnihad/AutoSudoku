@@ -103,6 +103,17 @@ function reset() {
   }
 }
 
+function populateSudokuGridWithValues() {
+  const cells = document.getElementsByClassName("sudoku-cell");
+  let index = 0;
+  for (let row = 0; row < 9; row++) {
+    for (let col = 0; col < 9; col++) {
+      cells[index].value = enteredValues[row][col].toString();
+      index++;
+    }
+  }
+}
+
 populateSudokuGrid();
 doneButton.addEventListener("click", () => {
   // enteredValues[3][3] = 5;
@@ -115,21 +126,9 @@ resetButton.addEventListener("click", () => {
   reset();
 });
 
-function populateSudokuGridWithValues() {
-  const cells = document.getElementsByClassName("sudoku-cell");
-  let index = 0;
-  for (let row = 0; row < 9; row++) {
-    for (let col = 0; col < 9; col++) {
-      cells[index].value = enteredValues[row][col].toString();
-      index++;
-    }
-  }
-}
-
 async function processImage() {
   const fileInput = document.getElementById("pic");
   const file = fileInput.files[0];
-
   const formData = new FormData();
   formData.append("file", file);
 
@@ -140,13 +139,36 @@ async function processImage() {
     });
 
     if (response.ok) {
-      const text = await response.text();
-      document.getElementById("result").innerText = text;
-      console.log(response);
+      const data = await response.json();
+      if (data.error) {
+        console.error(data.error);
+      } else {
+        updateSudokuGrid(data);
+      }
     } else {
       console.error("Failed to process image.");
     }
   } catch (error) {
     console.error("Error processing image:", error);
+  }
+}
+
+function updateSudokuGrid(data) {
+  const cells = document.getElementsByClassName("sudoku-cell");
+  let index = 0;
+
+  for (let row = 0; row < 9; row++) {
+    for (let col = 0; col < 9; col++) {
+      if (data[row][col] !== 0) {
+        cells[index].value = data[row][col].toString();
+        cells[index].classList.add("num_color");
+        enteredValues[row][col] = Number(data[row][col]); // Convert to a number
+      } else {
+        cells[index].value = "";
+        cells[index].classList.remove("num_color");
+        enteredValues[row][col] = 0; // Assign 0 instead of an empty string
+      }
+      index++;
+    }
   }
 }
