@@ -2,52 +2,44 @@ from utils import *
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-img_path = 'resources/sudoku_img_test.png'
-img_height = 450
-img_width = 450
-model = setModel()
+def process_image(img_path):
+    img_height = 450
+    img_width = 450
+    model = setModel()
 
-# img prep
-img = cv2.imread(img_path)
-img = cv2.resize(img,(img_width,img_height))
-img_threshold = preProcess(img)
-# cv2.imshow('image',img_threshold)
-# cv2.waitKey(0)
+    # Read and preprocess the image
+    img = cv2.imread(img_path)
+    img = cv2.resize(img, (img_width, img_height))
+    img_threshold = preProcess(img)
 
-# contour or margin finding
-imgContours = img.copy()
-imgLargeContours = img.copy()
-contours , hierarchy = cv2.findContours(img_threshold,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
-cv2.drawContours(imgContours,contours,-1,(0,255,0),3)
-# cv2.imshow('image',imgContours)
-# cv2.waitKey(0)
+    # Find contours
+    contours, hierarchy = cv2.findContours(img_threshold, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    largest, max_area = largestContour(contours)
 
-# largest contour
-largest,max_area = largestContour(contours)
-print(largest)
+    if largest.size != 0:
+        largest = reorder(largest)
+        pts1 = np.float32(largest) 
+        pts2 = np.float32([[0,0],[img_width,0],[0,img_height],[img_width,img_height]])
+        matrix = cv2.getPerspectiveTransform(pts1, pts2)
+        imgWarp = cv2.warpPerspective(img, matrix, (img_width, img_height))
+        imgWarp = cv2.cvtColor(imgWarp, cv2.COLOR_BGR2GRAY)
 
-if largest.size !=0 :
-    largest = reorder(largest)
-    print(largest)
-    cv2.drawContours(imgLargeContours,largest,-1,(0,255,0),25)
-    pts1 = np.float32(largest) 
-    pts2 = np.float32([[0,0],[img_width,0],[0,img_height],[img_width,img_height]])
-    marix = cv2.getPerspectiveTransform(pts1,pts2)
-    imgWarp = cv2.warpPerspective(img,marix,(img_width,img_height))
-    imgWarp = cv2.cvtColor(imgWarp,cv2.COLOR_BGR2GRAY)
-    # cv2.imshow('image',imgWarp)
-    # cv2.waitKey(0)
+        # Split image into boxes and get predictions
+        boxes = splitImg(imgWarp)
+        numbers = getPredictions(boxes, model)
+        numbers = np.asarray(numbers)
+        board = np.array_split(numbers, 9)
+        # Flatten the board
+        numb_board = np.reshape(numbers,(9, 9))
 
-# sudoku board
-    imgSolvedDigits = imgWarp.copy()
-    boxes = splitImg(imgWarp)
-    print(len(boxes))
-    numbers = getPredictions(boxes,model)
-    print(numbers)
-    numbers = np.asarray(numbers)
-    board = np.array_split(numbers,9)
-    new_board = np.reshape(numbers,(9,9))
+        return numb_board
+    else:
+        return None
+
+# Example usage
+img_path = 'resources/test5.jpg'
+board = process_image(img_path)
+if board is not None:
     print(board)
-    print(new_board)
-
-# model.summary()
+else:
+    print("No Sudoku board found in the image.")
