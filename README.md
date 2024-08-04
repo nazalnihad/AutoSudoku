@@ -1,2 +1,2 @@
 # AutoSudoku
-An ongoing attempt to solve sudoku from images 
+An attempt to solve sudoku from images 
